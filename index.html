@@ -825,9 +825,15 @@
       initPeer();
     });
 
+    // 6 haneli rastgele sayı üreten fonksiyon
+    function generateShortId() {
+      return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+
     // 1. PeerJS P2P Ağını Başlatma
     function initPeer() {
-      peer = new Peer();
+      // 6 haneli özel sayısal ID ile Peer başlatılır
+      peer = new Peer(generateShortId());
 
       peer.on('open', (id) => {
         myPeerId = id;
@@ -848,7 +854,12 @@
       });
 
       peer.on('error', (err) => {
-        console.error('P2P Hatası:', err);
+        // Eğer üretilen 6 haneli sayı sunucuda kullanımda ise yenisini üretip tekrar dener
+        if (err.type === 'unavailable-id') {
+          initPeer();
+        } else {
+          console.error('P2P Hatası:', err);
+        }
       });
     }
 
