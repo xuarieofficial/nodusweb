@@ -81,7 +81,7 @@
     }
 
     .sidebar {
-      width: 320px;
+      width: 350px;
       background-color: #0f0f12;
       border-right: 1px solid #27272a;
       display: flex;
@@ -89,36 +89,29 @@
       flex-shrink: 0;
     }
 
+    /* Durum Header (Tam Ortalanmış) */
     .p2p-status {
       padding: 16px;
       background-color: #141417;
       border-bottom: 1px solid #27272a;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
       cursor: pointer;
       transition: background 0.2s;
     }
 
     .p2p-status:hover { background-color: #18181b; }
 
-    .node-id {
-      font-size: 11px;
-      font-family: monospace;
-      color: #71717a;
-      background: #09090b;
-      padding: 4px 8px;
-      border-radius: 4px;
-      border: 1px solid #27272a;
-    }
-
     .connection-badge {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
-      font-size: 12px;
+      font-size: 13px;
       color: #10b981;
-      font-weight: 500;
+      font-weight: 600;
+      text-align: center;
     }
 
     .connection-badge.offline { color: #ef4444; }
@@ -137,10 +130,9 @@
     }
 
     .sidebar-action-bar {
-      padding: 8px 12px;
+      padding: 8px 12px 6px 12px;
       display: flex;
       gap: 8px;
-      border-bottom: 1px solid #27272a;
     }
 
     .action-btn {
@@ -164,6 +156,64 @@
       color: #f4f4f5;
       border-color: #3f3f46;
     }
+
+    /* Davet Et / Node Kodu Alanı (Butonların Altında) */
+    .node-code-wrapper {
+      padding: 6px 12px 10px 12px;
+      border-bottom: 1px solid #27272a;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .node-code-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #09090b;
+      border: 1px solid #27272a;
+      border-radius: 8px;
+      padding: 6px 8px;
+      gap: 8px;
+    }
+
+    .node-id-text {
+      font-size: 11px;
+      font-family: monospace;
+      color: #10b981;
+      word-break: break-all;
+      user-select: text;
+    }
+
+    .copy-btn {
+      background: #18181b;
+      border: 1px solid #27272a;
+      color: #f4f4f5;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: #27272a;
+      border-color: #3f3f46;
+    }
+
+    .toast-msg {
+      font-size: 10px;
+      color: #10b981;
+      display: none;
+      text-align: right;
+      font-weight: 500;
+    }
+
+    .toast-msg.active { display: block; }
 
     .peer-list {
       flex: 1;
@@ -597,14 +647,27 @@
 
   <div class="app-window">
     <div class="sidebar">
+      
+      <!-- Ortalanmış Durum Header -->
       <div class="p2p-status" id="p2pStatusToggle" onclick="toggleConnectionStatus()">
         <div class="connection-badge" id="badgeText"><span class="dot" id="badgeDot"></span> Nodus Bağlandı</div>
-        <span class="node-id" id="nodeIdDisplay">YÜKLENİYOR...</span>
       </div>
 
+      <!-- Aksiyon Butonları -->
       <div class="sidebar-action-bar">
         <button class="action-btn" onclick="openAddPeerModal()"><span class="material-symbols-rounded" style="font-size: 16px;">person_add</span> Ekle</button>
         <button class="action-btn" onclick="openInviteModal()"><span class="material-symbols-rounded" style="font-size: 16px;">share</span> Davet Et</button>
+      </div>
+
+      <!-- Davet Kodu / NODE Kodu Alanı -->
+      <div class="node-code-wrapper">
+        <div class="node-code-box">
+          <span class="node-id-text" id="nodeIdDisplay">KOD ALINIYOR...</span>
+          <button class="copy-btn" onclick="copyNodeCode()">
+            <span class="material-symbols-rounded" style="font-size: 14px;">content_copy</span> Kopyala
+          </button>
+        </div>
+        <div class="toast-msg" id="copyToast">Kopyalandı!</div>
       </div>
 
       <div class="peer-list" id="peerList">
@@ -770,7 +833,7 @@
         myPeerId = id;
         isConnected = true;
         updateConnectionUI(true);
-        document.getElementById('nodeIdDisplay').innerText = `NODE: ${id.substring(0, 8)}...`;
+        document.getElementById('nodeIdDisplay').innerText = id;
         document.getElementById('myInviteCode').value = id;
       });
 
@@ -809,6 +872,15 @@
       } else {
         peer.reconnect();
       }
+    }
+
+    function copyNodeCode() {
+      if (!myPeerId) return;
+      navigator.clipboard.writeText(myPeerId);
+      
+      const toast = document.getElementById('copyToast');
+      toast.classList.add('active');
+      setTimeout(() => toast.classList.remove('active'), 2000);
     }
 
     // 2. Veri Akışı ve Mesajlaşma Etkinlikleri
@@ -1112,7 +1184,7 @@
         <div class="avatar">${initials}</div>
         <div class="peer-info">
           <div class="peer-name">${escapeHtml(name)}</div>
-          <div class="peer-desc">${escapeHtml(code.substring(0, 10))}...</div>
+          <div class="peer-desc">${escapeHtml(code)}</div>
         </div>
       `;
 
