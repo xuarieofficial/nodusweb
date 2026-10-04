@@ -1,1271 +1,176 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nodus — P2P Messenger</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
-
-  <!-- PeerJS Kütüphanesi -->
-  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Inter', sans-serif;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-
-    .material-symbols-rounded {
-      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-      display: inline-flex !important;
-      align-items: center;
-      justify-content: center;
-      vertical-align: middle;
-      line-height: 1 !important;
-      height: 1em;
-      width: 1em;
-    }
-
-    ::-webkit-scrollbar { display: none; }
-    * { -ms-overflow-style: none; scrollbar-width: none; }
-
-    body {
-      background-color: #000000;
-      color: #e4e4e7;
-      display: flex;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-      position: relative;
-    }
-
-    body::before {
-      content: '';
-      position: absolute;
-      top: -150px;
-      left: -150px;
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(239, 68, 68, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    body::after {
-      content: '';
-      position: absolute;
-      bottom: -150px;
-      right: -150px;
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, rgba(239, 68, 68, 0.05) 0%, rgba(0, 0, 0, 0) 70%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .app-window {
-      width: 100vw;
-      height: 100vh;
-      background-color: rgba(9, 9, 11, 0.95);
-      display: flex;
-      overflow: hidden;
-      position: relative;
-      z-index: 1;
-    }
-
-    .sidebar {
-      width: 350px;
-      background-color: #0f0f12;
-      border-right: 1px solid #27272a;
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-    }
-
-    /* Durum Header (Tam Ortalanmış) */
-    .p2p-status {
-      padding: 16px;
-      background-color: #141417;
-      border-bottom: 1px solid #27272a;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .p2p-status:hover { background-color: #18181b; }
-
-    .connection-badge {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      font-size: 13px;
-      color: #10b981;
-      font-weight: 600;
-      text-align: center;
-    }
-
-    .connection-badge.offline { color: #ef4444; }
-
-    .dot {
-      width: 8px;
-      height: 8px;
-      background-color: #10b981;
-      border-radius: 50%;
-      box-shadow: 0 0 8px #10b981;
-    }
-
-    .dot.offline {
-      background-color: #ef4444;
-      box-shadow: 0 0 8px #ef4444;
-    }
-
-    .sidebar-action-bar {
-      padding: 8px 12px 6px 12px;
-      display: flex;
-      gap: 8px;
-    }
-
-    .action-btn {
-      flex: 1;
-      background-color: #18181b;
-      border: 1px solid #27272a;
-      color: #a1a1aa;
-      padding: 6px 10px;
-      border-radius: 8px;
-      font-size: 12px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: all 0.2s ease;
-    }
-
-    .action-btn:hover {
-      background-color: #27272a;
-      color: #f4f4f5;
-      border-color: #3f3f46;
-    }
-
-    /* Davet Et / Node Kodu Alanı (Butonların Altında) */
-    .node-code-wrapper {
-      padding: 6px 12px 10px 12px;
-      border-bottom: 1px solid #27272a;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .node-code-box {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #09090b;
-      border: 1px solid #27272a;
-      border-radius: 8px;
-      padding: 6px 8px;
-      gap: 8px;
-    }
-
-    .node-id-text {
-      font-size: 11px;
-      font-family: monospace;
-      color: #10b981;
-      word-break: break-all;
-      user-select: text;
-    }
-
-    .copy-btn {
-      background: #18181b;
-      border: 1px solid #27272a;
-      color: #f4f4f5;
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 11px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      flex-shrink: 0;
-      transition: background 0.2s;
-    }
-
-    .copy-btn:hover {
-      background: #27272a;
-      border-color: #3f3f46;
-    }
-
-    .toast-msg {
-      font-size: 10px;
-      color: #10b981;
-      display: none;
-      text-align: right;
-      font-weight: 500;
-    }
-
-    .toast-msg.active { display: block; }
-
-    .peer-list {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .peer-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: background 0.15s ease;
-    }
-
-    .peer-item:hover, .peer-item.active { background-color: #18181b; }
-
-    .avatar {
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-      background-color: #27272a;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 600;
-      color: #f4f4f5;
-      font-size: 14px;
-      border: 1px solid #3f3f46;
-      background-size: cover;
-      background-position: center;
-      flex-shrink: 0;
-    }
-
-    .peer-info { flex: 1; overflow: hidden; }
-
-    .peer-name {
-      font-size: 14px;
-      font-weight: 500;
-      color: #f4f4f5;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .peer-desc {
-      font-size: 12px;
-      color: #71717a;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .user-profile-bar {
-      margin: 12px;
-      padding: 12px 16px;
-      background-color: #141417;
-      border: 1px solid #27272a;
-      border-radius: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      transition: border-color 0.25s ease, box-shadow 0.25s ease;
-      cursor: pointer;
-    }
-
-    .user-profile-bar:hover {
-      border-color: #ef4444;
-      box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
-    }
-
-    .my-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .icon-btn {
-      background: none;
-      border: none;
-      color: #a1a1aa;
-      cursor: pointer;
-      width: 32px;
-      height: 32px;
-      padding: 0;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background-color 0.2s, color 0.2s;
-      flex-shrink: 0;
-    }
-
-    .icon-btn:hover {
-      background-color: #27272a;
-      color: #f4f4f5;
-    }
-
-    .chat-area {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background-color: transparent;
-      position: relative;
-    }
-
-    .chat-header {
-      padding: 16px 24px;
-      border-bottom: 1px solid #27272a;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background-color: #0f0f12;
-    }
-
-    .chat-messages {
-      flex: 1;
-      padding: 24px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      position: relative;
-    }
-
-    .empty-chat-placeholder {
-      display: none;
-      margin: auto;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      color: #3f3f46;
-      font-size: 15px;
-      font-weight: 500;
-    }
-
-    .empty-chat-placeholder.active { display: flex; }
-
-    @keyframes messagePop {
-      0% { opacity: 0; transform: translateY(16px) scale(0.96); }
-      100% { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    .message-group {
-      display: flex;
-      gap: 12px;
-      max-width: 70%;
-      cursor: context-menu;
-      animation: messagePop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
-    .message-group.outgoing {
-      align-self: flex-end;
-      flex-direction: row-reverse;
-    }
-
-    .message-content {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .message-bubble {
-      padding: 12px 16px;
-      border-radius: 12px;
-      font-size: 14px;
-      line-height: 1.5;
-      color: #f4f4f5;
-      white-space: pre-wrap;
-      word-break: break-word;
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .message-bubble.send-glow {
-      border-color: #ef4444 !important;
-      box-shadow: 0 0 18px rgba(239, 68, 68, 0.85);
-    }
-
-    .incoming .message-bubble {
-      background-color: #18181b;
-      border: 1px solid #27272a;
-      border-top-left-radius: 2px;
-    }
-
-    .outgoing .message-bubble {
-      background-color: #27272a;
-      border: 1px solid #3f3f46;
-      border-top-right-radius: 2px;
-    }
-
-    .reply-preview-bubble {
-      font-size: 11px;
-      background: rgba(239, 68, 68, 0.15);
-      border-left: 3px solid #ef4444;
-      padding: 4px 8px;
-      border-radius: 4px;
-      margin-bottom: 6px;
-      color: #a1a1aa;
-    }
-
-    .message-meta {
-      font-size: 10px;
-      color: #71717a;
-      margin-top: 4px;
-      display: flex;
-      gap: 6px;
-      align-items: center;
-    }
-
-    .outgoing .message-meta { justify-content: flex-end; }
-
-    .status-icon {
-      font-size: 14px;
-      line-height: 1;
-      display: inline-flex;
-      align-items: center;
-    }
-
-    .status-icon.delivered { color: #10b981; }
-    .status-icon.failed { color: #ef4444; }
-
-    .input-wrapper {
-      padding: 16px 24px;
-      background-color: #0f0f12;
-      border-top: 1px solid #27272a;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .reply-bar {
-      display: none;
-      align-items: center;
-      justify-content: space-between;
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid #ef4444;
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 12px;
-      color: #f4f4f5;
-    }
-
-    .reply-bar.active { display: flex; }
-
-    .input-box {
-      display: flex;
-      background-color: #18181b;
-      border: 1px solid #27272a;
-      border-radius: 12px;
-      padding: 8px 12px;
-      align-items: center;
-      gap: 8px;
-      width: 100%;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .input-box.typing-glow {
-      border-color: #ef4444 !important;
-      box-shadow: 0 0 12px rgba(239, 68, 68, 0.6);
-    }
-
-    .chat-input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: #f4f4f5;
-      font-size: 14px;
-      line-height: 20px;
-      padding: 0;
-      margin: 0;
-      outline: none;
-      resize: none;
-      max-height: 180px;
-      height: 20px;
-      overflow-y: hidden;
-      display: block;
-    }
-
-    .context-menu {
-      position: fixed;
-      background-color: #18181b;
-      border: 1px solid #27272a;
-      border-radius: 8px;
-      padding: 4px;
-      display: none;
-      z-index: 1000;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-    }
-
-    .context-menu-item {
-      padding: 8px 12px;
-      font-size: 13px;
-      color: #f4f4f5;
-      border-radius: 4px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .context-menu-item:hover { background-color: #27272a; }
-    .context-menu-item.danger { color: #ef4444; }
-
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(6px);
-      z-index: 100;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s cubic-bezier(0.2, 0, 0, 1);
-    }
-
-    .modal-overlay.active { opacity: 1; pointer-events: all; }
-
-    .modal-container {
-      position: fixed;
-      background-color: #141417;
-      border: 1px solid #27272a;
-      border-radius: 16px;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      overflow: hidden;
-      opacity: 0;
-      z-index: 101;
-      pointer-events: none;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.8);
-      transition: transform 0.35s cubic-bezier(0.2, 0, 0, 1), 
-                  width 0.35s cubic-bezier(0.2, 0, 0, 1), 
-                  height 0.35s cubic-bezier(0.2, 0, 0, 1), 
-                  top 0.35s cubic-bezier(0.2, 0, 0, 1), 
-                  left 0.35s cubic-bezier(0.2, 0, 0, 1), 
-                  opacity 0.25s ease,
-                  border-radius 0.35s ease;
-    }
-
-    .modal-container.active { opacity: 1; pointer-events: all; }
-
-    .modal-content {
-      opacity: 0;
-      transition: opacity 0.15s ease;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      height: 100%;
-    }
-
-    .modal-container.active .modal-content {
-      opacity: 1;
-      transition-delay: 0.15s;
-    }
-
-    .modal-header { font-size: 16px; font-weight: 600; color: #f4f4f5; }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .form-group label { font-size: 12px; color: #a1a1aa; }
-
-    .form-group input[type="text"] {
-      background-color: #09090b;
-      border: 1px solid #27272a;
-      border-radius: 8px;
-      padding: 10px 12px;
-      color: #f4f4f5;
-      outline: none;
-      font-size: 14px;
-    }
-
-    .file-input-wrapper { display: flex; align-items: center; gap: 12px; }
-
-    .file-btn {
-      background-color: #18181b;
-      border: 1px solid #27272a;
-      color: #f4f4f5;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 13px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .modal-actions {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: auto;
-    }
-
-    .btn-group-right { display: flex; gap: 8px; }
-
-    .btn {
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      border: none;
-    }
-
-    .btn-danger {
-      background-color: rgba(239, 68, 68, 0.15);
-      color: #ef4444;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .btn-secondary { background-color: #27272a; color: #f4f4f5; }
-    .btn-primary { background-color: #f4f4f5; color: #09090b; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nodus™ - Size Özel Sunum Şablonları</title>
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000000;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+        /* Scroll reveal animation styles */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
 </head>
-<body>
+<body class="bg-black text-gray-100 min-h-screen flex flex-col selection:bg-[#e50914] selection:text-white">
 
-  <div class="app-window">
-    <div class="sidebar">
-      
-      <!-- Ortalanmış Durum Header -->
-      <div class="p2p-status" id="p2pStatusToggle" onclick="toggleConnectionStatus()">
-        <div class="connection-badge" id="badgeText"><span class="dot" id="badgeDot"></span> Nodus Bağlandı</div>
-      </div>
-
-      <!-- Aksiyon Butonları -->
-      <div class="sidebar-action-bar">
-        <button class="action-btn" onclick="openAddPeerModal()"><span class="material-symbols-rounded" style="font-size: 16px;">person_add</span> Ekle</button>
-        <button class="action-btn" onclick="openInviteModal()"><span class="material-symbols-rounded" style="font-size: 16px;">share</span> Davet Et</button>
-      </div>
-
-      <!-- Davet Kodu / NODE Kodu Alanı -->
-      <div class="node-code-wrapper">
-        <div class="node-code-box">
-          <span class="node-id-text" id="nodeIdDisplay">KOD ALINIYOR...</span>
-          <button class="copy-btn" onclick="copyNodeCode()">
-            <span class="material-symbols-rounded" style="font-size: 14px;">content_copy</span> Kopyala
-          </button>
-        </div>
-        <div class="toast-msg" id="copyToast">Kopyalandı!</div>
-      </div>
-
-      <div class="peer-list" id="peerList">
-        <!-- Bağlanılan kullanıcılar buraya dinamik eklenir -->
-      </div>
-
-      <div class="user-profile-bar" id="profileBarBtn" onclick="openProfileModal()">
-        <div class="my-info">
-          <div class="avatar my-avatar">KD</div>
-          <div>
-            <div class="peer-name" id="myNameDisplay">Kullanıcı</div>
-            <div class="peer-desc" id="myStatusDisplay">Çevrimiçi</div>
-          </div>
-        </div>
-        <button class="icon-btn"><span class="material-symbols-rounded">edit</span></button>
-      </div>
-    </div>
-
-    <div class="chat-area">
-      <div class="chat-header">
-        <div class="my-info">
-          <div class="avatar" id="activePeerAvatar">?</div>
-          <div>
-            <div class="peer-name" id="activePeerName">Sohbet Seçilmedi</div>
-            <div class="peer-desc" id="activePeerAddress" style="color: #ef4444;">Bağlantı Yok</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="chat-messages" id="chatMessages">
-        <div class="empty-chat-placeholder active" id="emptyChatPlaceholder">
-          <span class="material-symbols-rounded" style="font-size: 36px; color: #27272a;">forum</span>
-          <span>Burası çok boş...</span>
-        </div>
-      </div>
-
-      <div class="input-wrapper">
-        <div class="reply-bar" id="replyBar">
-          <span id="replyText">Yanıtlanıyor...</span>
-          <button class="icon-btn" onclick="cancelReply()"><span class="material-symbols-rounded">close</span></button>
-        </div>
-        <div class="input-box" id="inputBox">
-          <textarea class="chat-input" id="messageInput" placeholder="Doğrudan mesaj gönder..." rows="1" onkeydown="handleKeyDown(event)"></textarea>
-          <button class="icon-btn" onclick="sendMessage()"><span class="material-symbols-rounded">send</span></button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="context-menu" id="contextMenu">
-    <div class="context-menu-item" onclick="initiateReply()">
-      <span class="material-symbols-rounded">reply</span> Yanıtla
-    </div>
-    <div class="context-menu-item" id="menuEdit" onclick="initiateEdit()">
-      <span class="material-symbols-rounded">edit</span> Düzenle
-    </div>
-    <div class="context-menu-item danger" id="menuDelete" onclick="deleteTargetMessage()">
-      <span class="material-symbols-rounded">delete</span> Sil
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="modalOverlay"></div>
-
-  <!-- Profil Modalı -->
-  <div class="modal-container" id="modalContainer">
-    <div class="modal-content">
-      <div class="modal-header">Profili Düzenle</div>
-      <div class="form-group">
-        <label>Kullanıcı Adı</label>
-        <input type="text" id="inputName" value="Kullanıcı">
-      </div>
-      <div class="form-group">
-        <label>Profil İnisiyali (Avatar)</label>
-        <input type="text" id="inputAvatar" maxlength="2" value="KD">
-      </div>
-      <div class="form-group">
-        <label>Profil Fotoğrafı</label>
-        <div class="file-input-wrapper">
-          <label class="file-btn" for="imageUpload">
-            <span class="material-symbols-rounded" style="font-size: 18px;">add_a_photo</span> Görsel Seç
-          </label>
-          <input type="file" id="imageUpload" accept="image/*" style="display: none;" onchange="previewImage(event)">
-          <span id="fileName" style="font-size: 12px; color: #71717a;">Seçilmedi</span>
-        </div>
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-danger" onclick="clearAllData()">
-          <span class="material-symbols-rounded" style="font-size: 16px;">delete_forever</span> Temizle
-        </button>
-        <div class="btn-group-right">
-          <button class="btn btn-secondary" onclick="closeProfileModal()">İptal</button>
-          <button class="btn btn-primary" onclick="saveProfile()">Kaydet</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Davet Et Modalı -->
-  <div class="modal-container" id="inviteModalContainer">
-    <div class="modal-content">
-      <div class="modal-header">Bağlantı Kodun (Davet Et)</div>
-      <div class="form-group">
-        <label>Diğer kullanıcıya göndereceğin Nodus Kodu:</label>
-        <input type="text" id="myInviteCode" readonly value="Yükleniyor...">
-      </div>
-      <div class="modal-actions">
-        <div></div>
-        <div class="btn-group-right">
-          <button class="btn btn-secondary" onclick="closeInviteModal()">Kapat</button>
-          <button class="btn btn-primary" onclick="copyInviteCode()">Kopyala</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Kullanıcı Ekle Modalı -->
-  <div class="modal-container" id="addPeerModalContainer">
-    <div class="modal-content">
-      <div class="modal-header">Kullanıcı / Düğüm Ekle</div>
-      <div class="form-group">
-        <label>Kullanıcı Adı</label>
-        <input type="text" id="newPeerName" placeholder="Örn: Mehmet">
-      </div>
-      <div class="form-group">
-        <label>Nodus Kodu (Peer ID)</label>
-        <input type="text" id="newPeerCode" placeholder="Nodus kodunu yapıştırın">
-      </div>
-      <div class="modal-actions">
-        <div></div>
-        <div class="btn-group-right">
-          <button class="btn btn-secondary" onclick="closeAddPeerModal()">İptal</button>
-          <button class="btn btn-primary" onclick="addNewPeer()">Bağlan</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    let activeMessageElement = null;
-    let replyMessageText = null;
-    let editingMessageElement = null;
-    let tempImageBase64 = null;
-    let typingTimer = null;
-    let isConnected = false;
-
-    // P2P Değişkenleri
-    let peer = null;
-    let conn = null;
-    let myPeerId = null;
-
-    window.addEventListener('DOMContentLoaded', () => {
-      loadProfile();
-      setupChatInputEvents();
-      checkEmptyChat();
-      initPeer();
-    });
-
-    // 6 haneli rastgele sayı üreten fonksiyon
-    function generateShortId() {
-      return Math.floor(100000 + Math.random() * 900000).toString();
-    }
-
-    // 1. PeerJS P2P Ağını Başlatma
-    function initPeer() {
-      // 6 haneli özel sayısal ID ile Peer başlatılır
-      peer = new Peer(generateShortId());
-
-      peer.on('open', (id) => {
-        myPeerId = id;
-        isConnected = true;
-        updateConnectionUI(true);
-        document.getElementById('nodeIdDisplay').innerText = id;
-        document.getElementById('myInviteCode').value = id;
-      });
-
-      peer.on('connection', (connection) => {
-        conn = connection;
-        setupDataEvents();
-      });
-
-      peer.on('disconnected', () => {
-        isConnected = false;
-        updateConnectionUI(false);
-      });
-
-      peer.on('error', (err) => {
-        // Eğer üretilen 6 haneli sayı sunucuda kullanımda ise yenisini üretip tekrar dener
-        if (err.type === 'unavailable-id') {
-          initPeer();
-        } else {
-          console.error('P2P Hatası:', err);
-        }
-      });
-    }
-
-    function updateConnectionUI(status) {
-      const badgeText = document.getElementById('badgeText');
-      const nodeId = document.getElementById('nodeIdDisplay');
-
-      if (status) {
-        badgeText.className = 'connection-badge';
-        badgeText.innerHTML = '<span class="dot" id="badgeDot"></span> Nodus Bağlandı';
-      } else {
-        badgeText.className = 'connection-badge offline';
-        badgeText.innerHTML = '<span class="dot offline" id="badgeDot"></span> Nodus Bağlı Değil';
-        nodeId.innerText = 'ÇEVRİMDIŞI';
-      }
-    }
-
-    function toggleConnectionStatus() {
-      if (isConnected) {
-        peer.disconnect();
-      } else {
-        peer.reconnect();
-      }
-    }
-
-    function copyNodeCode() {
-      if (!myPeerId) return;
-      navigator.clipboard.writeText(myPeerId);
-      
-      const toast = document.getElementById('copyToast');
-      toast.classList.add('active');
-      setTimeout(() => toast.classList.remove('active'), 2000);
-    }
-
-    // 2. Veri Akışı ve Mesajlaşma Etkinlikleri
-    function setupDataEvents() {
-      conn.on('open', () => {
-        document.getElementById('activePeerName').innerText = conn.metadata?.name || 'Bilinmeyen Kullanıcı';
-        document.getElementById('activePeerAddress').innerText = 'Doğrudan P2P Açık';
-        document.getElementById('activePeerAddress').style.color = '#10b981';
-        document.getElementById('activePeerAvatar').innerText = (conn.metadata?.name || 'P2P').substring(0, 2).toUpperCase();
-
-        addPeerToList(conn.metadata?.name || 'Aktif Düğüm', conn.peer);
-      });
-
-      conn.on('data', (data) => {
-        if (typeof data === 'object' && data.type === 'chat') {
-          receiveMessage(data.text, data.reply);
-        }
-      });
-
-      conn.on('close', () => {
-        document.getElementById('activePeerAddress').innerText = 'Bağlantı Koptu';
-        document.getElementById('activePeerAddress').style.color = '#ef4444';
-      });
-    }
-
-    function receiveMessage(text, replyText) {
-      const now = new Date();
-      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      const chatMessages = document.getElementById('chatMessages');
-
-      const msgGroup = document.createElement('div');
-      msgGroup.className = 'message-group incoming';
-      msgGroup.setAttribute('data-sender', 'other');
-
-      let replyHTML = replyText ? `<div class="reply-preview-bubble">${escapeHtml(replyText)}</div>` : '';
-      const peerInitials = document.getElementById('activePeerAvatar').innerText || 'AY';
-
-      msgGroup.innerHTML = `
-        <div class="avatar">${peerInitials}</div>
-        <div class="message-content">
-          <div class="message-bubble">${replyHTML}${escapeHtml(text)}</div>
-          <div class="message-meta"><span>${timeStr}</span></div>
-        </div>
-      `;
-
-      chatMessages.appendChild(msgGroup);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-      checkEmptyChat();
-    }
-
-    function sendMessage() {
-      const input = document.getElementById('messageInput');
-      const text = input.value.trim();
-      if (!text) return;
-
-      if (editingMessageElement) {
-        editingMessageElement.innerText = text;
-        editingMessageElement = null;
-      } else {
-        const now = new Date();
-        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        const chatMessages = document.getElementById('chatMessages');
-
-        const isP2PActive = conn && conn.open;
-
-        // Mesaj İletim Durumu İkonu (! veya ✓)
-        const statusIconHTML = isP2PActive 
-          ? `<span class="material-symbols-rounded status-icon delivered" title="İletildi">check</span>` 
-          : `<span class="material-symbols-rounded status-icon failed" title="Bağlantı Yok - Gönderilemedi">priority_high</span>`;
-
-        // Eğer P2P bağlantısı açıksa veriyi gönder
-        if (isP2PActive) {
-          conn.send({
-            type: 'chat',
-            text: text,
-            reply: replyMessageText
-          });
-        }
-
-        const msgGroup = document.createElement('div');
-        msgGroup.className = 'message-group outgoing';
-        msgGroup.setAttribute('data-sender', 'me');
-
-        let replyHTML = replyMessageText ? `<div class="reply-preview-bubble">${escapeHtml(replyMessageText)}</div>` : '';
-        const savedImage = localStorage.getItem('nodus_user_image');
-        const savedInitials = localStorage.getItem('nodus_user_initials') || 'KD';
-        const avatarStyle = savedImage ? `style="background-image: url(${savedImage});"` : '';
-        const avatarText = savedImage ? '' : savedInitials;
-
-        msgGroup.innerHTML = `
-          <div class="avatar my-avatar" ${avatarStyle}>${avatarText}</div>
-          <div class="message-content">
-            <div class="message-bubble send-glow">${replyHTML}${escapeHtml(text)}</div>
-            <div class="message-meta">
-              <span>${timeStr}</span>
-              ${statusIconHTML}
+    <header class="w-full bg-black border-b border-zinc-900 sticky top-0 z-50 backdrop-blur-md bg-opacity-95">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-24 flex items-center justify-between">
+            <!-- Left Brand Logo (Yazı kaldırıldı, logo büyütüldü ve çubuğa tam oturtuldu) -->
+            <div class="flex items-center h-full py-2.5">
+                <a href="#" class="flex items-center h-full group">
+                    <img src="https://github.com/xuarieofficial/nodusweb/blob/main/noduslogo.png?raw=true" 
+                         alt="Nodus Logo" 
+                         class="h-full max-h-full w-auto object-contain transition-transform duration-300 group-hover:scale-105"
+                         onerror="this.style.display='none'">
+                </a>
             </div>
-          </div>
-        `;
 
-        chatMessages.appendChild(msgGroup);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-
-        const bubble = msgGroup.querySelector('.message-bubble');
-        setTimeout(() => bubble.classList.remove('send-glow'), 500);
-      }
-
-      input.value = '';
-      input.style.height = '20px';
-      cancelReply();
-      checkEmptyChat();
-    }
-
-    function checkEmptyChat() {
-      const messages = document.querySelectorAll('#chatMessages .message-group');
-      const placeholder = document.getElementById('emptyChatPlaceholder');
-      if (messages.length === 0) {
-        placeholder.classList.add('active');
-      } else {
-        placeholder.classList.remove('active');
-      }
-    }
-
-    function setupChatInputEvents() {
-      const textarea = document.getElementById('messageInput');
-      const inputBox = document.getElementById('inputBox');
-
-      textarea.addEventListener('input', () => {
-        textarea.style.height = 'auto';
-        textarea.style.height = textarea.scrollHeight + 'px';
-        textarea.style.overflowY = textarea.scrollHeight > 180 ? 'auto' : 'hidden';
-
-        inputBox.classList.add('typing-glow');
-        clearTimeout(typingTimer);
-        typingTimer = setTimeout(() => {
-          inputBox.classList.remove('typing-glow');
-        }, 150);
-      });
-    }
-
-    function loadProfile() {
-      const savedName = localStorage.getItem('nodus_user_name');
-      const savedInitials = localStorage.getItem('nodus_user_initials');
-      const savedImage = localStorage.getItem('nodus_user_image');
-
-      if (savedName) {
-        document.getElementById('myNameDisplay').innerText = savedName;
-        document.getElementById('inputName').value = savedName;
-      }
-      if (savedInitials) document.getElementById('inputAvatar').value = savedInitials;
-      applyAvatarData(savedInitials || 'KD', savedImage);
-    }
-
-    function applyAvatarData(initials, imageData) {
-      document.querySelectorAll('.my-avatar').forEach(avatar => {
-        if (imageData) {
-          avatar.style.backgroundImage = `url(${imageData})`;
-          avatar.innerText = '';
-        } else {
-          avatar.style.backgroundImage = 'none';
-          avatar.innerText = initials;
-        }
-      });
-    }
-
-    function previewImage(event) {
-      const file = event.target.files[0];
-      if (file) {
-        document.getElementById('fileName').innerText = file.name;
-        const reader = new FileReader();
-        reader.onload = e => tempImageBase64 = e.target.result;
-        reader.readAsDataURL(file);
-      }
-    }
-
-    function clearAllData() {
-      if (confirm('Tüm kayıtlı veriler silinsin mi?')) {
-        localStorage.clear();
-        location.reload();
-      }
-    }
-
-    document.addEventListener('contextmenu', (e) => {
-      const msgGroup = e.target.closest('.message-group');
-      if (msgGroup) {
-        e.preventDefault();
-        activeMessageElement = msgGroup;
-        const isMe = msgGroup.getAttribute('data-sender') === 'me';
-
-        document.getElementById('menuEdit').style.display = isMe ? 'flex' : 'none';
-        document.getElementById('menuDelete').style.display = isMe ? 'flex' : 'none';
-
-        const menu = document.getElementById('contextMenu');
-        menu.style.top = `${e.clientY}px`;
-        menu.style.left = `${e.clientX}px`;
-        menu.style.display = 'block';
-      } else {
-        hideContextMenu();
-      }
-    });
-
-    document.addEventListener('click', hideContextMenu);
-    function hideContextMenu() { document.getElementById('contextMenu').style.display = 'none'; }
-
-    function initiateReply() {
-      if (!activeMessageElement) return;
-      const text = activeMessageElement.querySelector('.message-bubble').innerText;
-      replyMessageText = text;
-      document.getElementById('replyText').innerText = `Yanıtlanıyor: "${text.substring(0, 30)}..."`;
-      document.getElementById('replyBar').classList.add('active');
-    }
-
-    function cancelReply() {
-      replyMessageText = null;
-      document.getElementById('replyBar').classList.remove('active');
-    }
-
-    function initiateEdit() {
-      if (!activeMessageElement) return;
-      editingMessageElement = activeMessageElement.querySelector('.message-bubble');
-      const input = document.getElementById('messageInput');
-      input.value = editingMessageElement.innerText;
-      input.focus();
-    }
-
-    function handleKeyDown(e) {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    }
-
-    function deleteTargetMessage() {
-      if (activeMessageElement) {
-        activeMessageElement.remove();
-        checkEmptyChat();
-      }
-    }
-
-    function openProfileModal() {
-      animateModalOpen(document.getElementById('profileBarBtn'), document.getElementById('modalContainer'), 420, 360);
-    }
-
-    function closeProfileModal() {
-      animateModalClose(document.getElementById('profileBarBtn'), document.getElementById('modalContainer'));
-    }
-
-    function openInviteModal() {
-      animateModalOpen(document.querySelectorAll('.action-btn')[1], document.getElementById('inviteModalContainer'), 380, 220);
-    }
-
-    function closeInviteModal() {
-      animateModalClose(document.querySelectorAll('.action-btn')[1], document.getElementById('inviteModalContainer'));
-    }
-
-    function copyInviteCode() {
-      const codeInput = document.getElementById('myInviteCode');
-      codeInput.select();
-      navigator.clipboard.writeText(codeInput.value);
-      alert('Nodus Kodunuz kopyalandı!');
-      closeInviteModal();
-    }
-
-    function openAddPeerModal() {
-      animateModalOpen(document.querySelectorAll('.action-btn')[0], document.getElementById('addPeerModalContainer'), 380, 280);
-    }
-
-    function closeAddPeerModal() {
-      animateModalClose(document.querySelectorAll('.action-btn')[0], document.getElementById('addPeerModalContainer'));
-    }
-
-    function addNewPeer() {
-      const name = document.getElementById('newPeerName').value.trim();
-      const code = document.getElementById('newPeerCode').value.trim();
-
-      if (!name || !code) {
-        alert('Lütfen hem isim hem de Nodus kodunu girin.');
-        return;
-      }
-
-      // Karşı tarafa PeerJS ile bağlan
-      conn = peer.connect(code, {
-        metadata: { name: localStorage.getItem('nodus_user_name') || 'Kullanıcı' }
-      });
-
-      setupDataEvents();
-      addPeerToList(name, code);
-
-      document.getElementById('newPeerName').value = '';
-      document.getElementById('newPeerCode').value = '';
-      closeAddPeerModal();
-    }
-
-    function addPeerToList(name, code) {
-      const peerList = document.getElementById('peerList');
-      const initials = name.substring(0, 2).toUpperCase();
-
-      const item = document.createElement('div');
-      item.className = 'peer-item active';
-      item.innerHTML = `
-        <div class="avatar">${initials}</div>
-        <div class="peer-info">
-          <div class="peer-name">${escapeHtml(name)}</div>
-          <div class="peer-desc">${escapeHtml(code)}</div>
+            <!-- Right Contact Button -->
+            <div>
+                <a href="https://instagram.com/nodus" target="_blank" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-[#e50914]/50 text-white text-sm font-medium px-5 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-2 shadow-sm">
+                    <i class="fa-brands fa-instagram text-[#e50914]"></i>
+                    <span>İletişim</span>
+                </a>
+            </div>
         </div>
-      `;
+    </header>
 
-      peerList.appendChild(item);
-    }
+    <section class="py-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center reveal">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#e50914]/10 border border-[#e50914]/30 text-[#e50914] text-xs font-semibold tracking-wide uppercase mb-6 shadow-inner">
+            <span class="w-2 h-2 rounded-full bg-[#e50914] animate-pulse"></span>
+            Yeni Nesil Sunum Çözümleri
+        </div>
+        <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white mb-6">
+            Fikirlerinizi <span class="text-[#e50914]">Nodus™</span> ile Güçlendirin
+        </h1>
+        <p class="text-lg sm:text-xl text-zinc-400 max-w-2xl mx-auto leading-relaxed font-light">
+            Tam kişisel - her amaç için sunum veya şablon oluşturma
+        </p>
+    </section>
 
-    function animateModalOpen(sourceBtn, container, targetWidth, targetHeight) {
-      const rect = sourceBtn.getBoundingClientRect();
-      const overlay = document.getElementById('modalOverlay');
+    <main class="flex-1 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-32 w-full">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 max-w-4xl mx-auto">
 
-      container.style.transition = 'none';
-      container.style.top = `${rect.top}px`;
-      container.style.left = `${rect.left}px`;
-      container.style.width = `${rect.width}px`;
-      container.style.height = `${rect.height}px`;
-      container.style.borderRadius = '16px';
-      container.style.opacity = '0.5';
+            <!-- Product 1: PPTX Standard Template -->
+            <div class="reveal bg-zinc-950 border border-zinc-900 rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 hover:border-[#e50914]/60 hover:shadow-2xl hover:shadow-[#e50914]/10 group">
+                <div>
+                    <div class="flex justify-between items-center mb-6">
+                        <span class="px-3.5 py-1 bg-zinc-900 border border-zinc-800 rounded-full text-xs font-medium text-zinc-300">Standart Şablon</span>
+                        <span class="text-xs text-zinc-500 font-mono font-semibold">.pptx</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2 group-hover:text-[#e50914] transition-colors">PPTX Şablon Paketi</h3>
+                    <p class="text-zinc-400 text-sm mb-6 leading-relaxed">Modern, şık ve tamamen özelleştirilebilir standart PowerPoint sunum şablonları koleksiyonu.</p>
+                    
+                    <div class="text-3xl font-extrabold text-white mb-6">
+                        200 <span class="text-[#e50914] font-bold">₺</span>
+                    </div>
 
-      overlay.classList.add('active');
+                    <ul class="space-y-3.5 text-sm text-zinc-300 mb-8 border-t border-zinc-900 pt-6">
+                        <li class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-[#e50914] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                            Sınırsız Sayfa
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-[#e50914] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                            Tüm Renk Paletleri
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-[#e50914] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                            Belirli mekanikler
+                        </li>
+                    </ul>
+                </div>
 
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          container.style.transition = 'transform 0.35s cubic-bezier(0.2, 0, 0, 1), width 0.35s cubic-bezier(0.2, 0, 0, 1), height 0.35s cubic-bezier(0.2, 0, 0, 1), top 0.35s cubic-bezier(0.2, 0, 0, 1), left 0.35s cubic-bezier(0.2, 0, 0, 1), opacity 0.2s ease, border-radius 0.35s ease';
-          container.style.top = `${(window.innerHeight - targetHeight) / 2}px`;
-          container.style.left = `${(window.innerWidth - targetWidth) / 2}px`;
-          container.style.width = `${targetWidth}px`;
-          container.style.height = `${targetHeight}px`;
-          container.style.borderRadius = '16px';
-          container.style.opacity = '1';
-          container.classList.add('active');
+                <a href="https://instagram.com/nodus" target="_blank" class="w-full bg-[#e50914] hover:bg-[#b20710] text-white font-semibold py-3.5 px-6 rounded-xl transition-all duration-200 text-center shadow-lg shadow-[#e50914]/25 flex items-center justify-center gap-2">
+                    <span>Satın Al</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </a>
+            </div>
+
+            <!-- Product 2: PPTM Macro Template -->
+            <div class="reveal bg-zinc-950 border border-zinc-900 rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 hover:border-[#e50914]/60 hover:shadow-2xl hover:shadow-[#e50914]/10 group relative overflow-hidden">
+                <div>
+                    <div class="flex justify-between items-center mb-6">
+                        <span class="px-3.5 py-1 bg-[#e50914]/15 border border-[#e50914]/30 rounded-full text-xs font-medium text-[#e50914]">Gelişmiş Makro</span>
+                        <span class="text-xs text-zinc-500 font-mono font-semibold">.pptm</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2 group-hover:text-[#e50914] transition-colors">PPTM Makro Paket</h3>
+                    <p class="text-zinc-400 text-sm mb-6 leading-relaxed">Otomasyon ve özel makro destekli, iş süreçlerinizi hızlandıran gelişmiş şablonlar.</p>
+                    
+                    <div class="text-3xl font-extrabold text-white mb-6">
+                        400 <span class="text-[#e50914] font-bold">₺</span>
+                    </div>
+
+                    <ul class="space-y-3.5 text-sm text-zinc-300 mb-8 border-t border-zinc-900 pt-6">
+                        <li class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-[#e50914] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                            Tüm Standart PPTX Özellikleri
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-[#e50914] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                            Özel Otomasyon Makroları (.pptm)
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-[#e50914] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                            Tek Tuşla Veri ve Slayt Düzenleme
+                        </li>
+                    </ul>
+                </div>
+
+                <a href="https://instagram.com/nodus" target="_blank" class="w-full bg-[#e50914] hover:bg-[#b20710] text-white font-semibold py-3.5 px-6 rounded-xl transition-all duration-200 text-center shadow-lg shadow-[#e50914]/25 flex items-center justify-center gap-2">
+                    <span>Satın Al</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </a>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="bg-black border-t border-zinc-900 py-10 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-zinc-500 text-sm">
+            <p>&copy; 2026 Nodus™. Tüm hakları saklıdır.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const reveals = document.querySelectorAll(".reveal");
+
+            function revealOnScroll() {
+                reveals.forEach(element => {
+                    const windowHeight = window.innerHeight;
+                    const elementTop = element.getBoundingClientRect().top;
+                    const elementVisible = 100;
+
+                    if (elementTop < windowHeight - elementVisible) {
+                        element.classList.add("active");
+                    }
+                });
+            }
+
+            window.addEventListener("scroll", revealOnScroll);
+            revealOnScroll(); 
         });
-      });
-    }
-
-    function animateModalClose(sourceBtn, container) {
-      const rect = sourceBtn.getBoundingClientRect();
-
-      container.classList.remove('active');
-      document.getElementById('modalOverlay').classList.remove('active');
-
-      container.style.top = `${rect.top}px`;
-      container.style.left = `${rect.left}px`;
-      container.style.width = `${rect.width}px`;
-      container.style.height = `${rect.height}px`;
-      container.style.borderRadius = '16px';
-      container.style.opacity = '0';
-    }
-
-    function saveProfile() {
-      const name = document.getElementById('inputName').value.trim();
-      const avatarInitials = document.getElementById('inputAvatar').value.toUpperCase().trim();
-
-      if (name) {
-        document.getElementById('myNameDisplay').innerText = name;
-        localStorage.setItem('nodus_user_name', name);
-      }
-      if (avatarInitials) {
-        localStorage.setItem('nodus_user_initials', avatarInitials);
-      }
-      if (tempImageBase64) {
-        localStorage.setItem('nodus_user_image', tempImageBase64);
-      }
-
-      applyAvatarData(avatarInitials || 'KD', tempImageBase64 || localStorage.getItem('nodus_user_image'));
-      closeProfileModal();
-    }
-
-    function escapeHtml(text) {
-      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    }
-  </script>
+    </script>
 </body>
 </html>
